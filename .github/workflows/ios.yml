@@ -73,21 +73,33 @@ jobs:
         if: steps.native-cache.outputs.cache-hit != 'true'
         run: bash native/ios/build_worldline_ios.sh
 
-      # The .NET iOS tasks run `xcrun actool|ibtool` with a minimal environment
-      # (PATH=<Xcode>/usr/bin only), where xcrun's first lookup of those tools
-      # fails on fresh runners ("unable to find utility"). Running the same
-      # lookup once beforehand, in that same environment, makes the build's
-      # calls succeed.
-      - name: Warm up Xcode asset tools
+      # The .NET iOS tasks run `/usr/bin/xcrun <tool>` from inside MSBuild, and on
+      # these runners xcrun's first lookup of a tool from that environment fails
+      # ("unable to find utility", exit 72). Resolving each tool once beforehand
+      # from a clean environment (as the task does: PATH=<Xcode>/usr/bin) fixes it,
+      # so pre-resolve every Xcode tool the build is known to call.
+      - name: Warm up xcrun tool lookups
         run: |
           DEV="$(xcode-select -p)"
           xcrun simctl list runtimes > /dev/null
-          for TOOL in actool ibtool; do
-            xcrun "$TOOL" --version > /dev/null
-            OUT="$(env -i HOME="$HOME" PATH="$DEV/usr/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$DEV/usr" \
-              /usr/bin/xcrun "$TOOL" --version 2>&1 | tail -3 | tr '\n' ' ')"
-            echo "::notice title=$TOOL warm-up::$OUT"
+          TOOLS="actool ibtool install_name_tool strip dsymutil lipo codesign codesign_allocate
+                 clang clang++ ld ar ranlib libtool nm otool bitcode_strip plutil
+                 swift-stdlib-tool swiftc momc mapc metal metallib coremlc intentbuilderc
+                 xcodebuild simctl devicectl dwarfdump size segedit vtool"
+          MISSING=""
+          for TOOL in $TOOLS; do
+            for SDK in "" iphonesimulator iphoneos macosx; do
+              ARGS=(); [ -n "$SDK" ] && ARGS=(-sdk "$SDK")
+              env -i HOME="$HOME" PATH="$DEV/usr/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$DEV/usr" \
+                /usr/bin/xcrun "${ARGS[@]}" -f "$TOOL" > /dev/null 2>&1 || MISSING="$MISSING $TOOL(${SDK:-default})"
+              xcrun "${ARGS[@]}" -f "$TOOL" > /dev/null 2>&1 || true
+            done
           done
+          for TOOL in actool ibtool; do
+            env -i HOME="$HOME" PATH="$DEV/usr/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$DEV/usr" \
+              /usr/bin/xcrun "$TOOL" --version > /dev/null 2>&1 || true
+          done
+          echo "::notice title=xcrun warm-up::not found:${MISSING:- none}"
 
       # ------------------------------------------------- simulator + smoke --
       - name: Build for simulator
