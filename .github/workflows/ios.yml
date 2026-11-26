@@ -121,6 +121,7 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$APP"
           mkdir -p smoke
+          LAUNCH_START="$(date +%s)"; echo "$LAUNCH_START" > smoke/launch_start
           xcrun simctl launch --terminate-running-process \
             --stdout="$PWD/smoke/stdout.txt" --stderr="$PWD/smoke/stderr.txt" \
             "$UDID" "$BUNDLE_ID"
@@ -131,6 +132,10 @@ jobs:
           xcrun simctl spawn "$UDID" launchctl list | grep -i openutau > smoke/process.txt || echo "PROCESS NOT RUNNING" > smoke/process.txt
           cat smoke/stdout.txt smoke/stderr.txt | grep '\[ios-port\]' || true
           cat smoke/process.txt
+          cp ~/Library/Logs/DiagnosticReports/*OpenUtau* smoke/ 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 3m --style compact             --predicate 'process CONTAINS "OpenUtau"' > smoke/syslog.txt 2>&1 || true
+          # Surface what happened as annotations (artifacts need a login to download).
+          python3 .github/scripts/report_smoke.py smoke || true
           # Fail if the app died or a native dependency did not load.
           if grep -q "NOT RUNNING" smoke/process.txt; then echo "::error::app is not running"; exit 1; fi
           if grep -q '\[ios-port\].*FAIL' smoke/stdout.txt; then echo "::error::native self-check failed"; exit 1; fi
