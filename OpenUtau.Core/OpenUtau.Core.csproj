@@ -37,6 +37,12 @@
     <PackageReference Include="YamlDotNet" Version="15.1.2" />
     <PackageReference Include="NetMQ" Version="4.0.1.13" />
   </ItemGroup>
+  <!-- iOS (-p:IosOnly=true): DryWetMidi's build/ targets copy desktop MIDI-device
+       binaries (Win32 .dll / macOS .dylib) to the output, which the iOS app build
+       then tries to embed and fails on. Only MIDI file I/O is used, which is managed. -->
+  <ItemGroup Condition="'$(IosOnly)' == 'true'">
+    <PackageReference Update="Melanchall.DryWetMidi" ExcludeAssets="build" />
+  </ItemGroup>
   <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.16.3" />
