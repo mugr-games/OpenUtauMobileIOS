@@ -52,6 +52,13 @@ jobs:
           XV="$(xcodebuild -version | tr '\n' ' ')"
           ACTOOL="$(xcrun --find actool 2>&1 || true)"
           RUNTIMES="$(xcrun simctl list runtimes 2>&1 | grep -i ios | tr '\n' ';')"
+          # The build's actool lookup (xcrun -sdk <MacOSX.sdk> actool) falls back to
+          # `xcodebuild -find`, which fails on the runner; xcrun also searches PATH.
+          echo "$(xcode-select -p)/usr/bin" >> "$GITHUB_PATH"
+          MACSDK="$(xcrun --sdk macosx --show-sdk-path)"
+          FIND="$(xcodebuild -sdk "$MACSDK" -find actool 2>&1 | tail -3 | tr '\n' ' ')"
+          VIA="$(xcrun -sdk "$MACSDK" -f actool 2>&1 | tr '\n' ' ')"
+          echo "::notice title=actool lookup::xcodebuild -find: $FIND | xcrun -sdk macsdk -f: $VIA"
           echo "::notice title=Toolchain::workload Xcode=$WANT | selected $(xcode-select -p) | $XV | actool=$ACTOOL | sim runtimes: $RUNTIMES | installed: $(ls -d /Applications/Xcode*.app | tr '\n' ' ')"
 
       # ---------------------------------------------------- native library --
