@@ -32,11 +32,9 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      # The project multi-targets android+ios, and restore evaluates every TFM,
-      # so the android workloads are needed even for an iOS-only build.
-      - name: Install workloads
+      - name: Install iOS workload
         run: |
-          dotnet workload restore "$PROJECT"
+          dotnet workload install maui-ios
           dotnet workload list
 
       # ---------------------------------------------------- native library --
@@ -55,7 +53,7 @@ jobs:
       - name: Build for simulator
         run: |
           set -o pipefail
-          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64             -p:EnableCodeSigning=false 2>&1 | tee build-sim.log
+          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64             -p:EnableCodeSigning=false -p:IosOnly=true 2>&1 | tee build-sim.log
 
       - name: Simulator smoke test
         run: |
@@ -102,7 +100,7 @@ jobs:
       - name: Build for device (unsigned)
         run: |
           set -o pipefail
-          dotnet build "$PROJECT" -f $TFM -c Release -r ios-arm64             -p:EnableCodeSigning=false 2>&1 | tee build-device.log
+          dotnet build "$PROJECT" -f $TFM -c Release -r ios-arm64             -p:EnableCodeSigning=false -p:IosOnly=true 2>&1 | tee build-device.log
 
       - name: Package unsigned IPA
         run: |

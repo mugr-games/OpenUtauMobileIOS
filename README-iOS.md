@@ -42,10 +42,10 @@ dotnet workload install maui-ios
 bash native/ios/build_worldline_ios.sh          # -> OpenUtauMobile/Platforms/iOS/Native/worldline.xcframework
 
 # simulator
-dotnet build OpenUtauMobile/OpenUtauMobile.csproj -f net9.0-ios -c Release -r iossimulator-arm64
+dotnet build OpenUtauMobile/OpenUtauMobile.csproj -f net9.0-ios -p:IosOnly=true -c Release -r iossimulator-arm64
 
 # device: signs with your development team, or pass -p:EnableCodeSigning=false for an unsigned .app
-dotnet build OpenUtauMobile/OpenUtauMobile.csproj -f net9.0-ios -c Release -r ios-arm64
+dotnet build OpenUtauMobile/OpenUtauMobile.csproj -f net9.0-ios -p:IosOnly=true -c Release -r ios-arm64
 ```
 
 `.github/workflows/ios.yml` does the same on a GitHub macOS runner. It also
