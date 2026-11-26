@@ -73,21 +73,21 @@ jobs:
         if: steps.native-cache.outputs.cache-hit != 'true'
         run: bash native/ios/build_worldline_ios.sh
 
-      - name: Diagnose actool environment
-        continue-on-error: true
+      # The .NET iOS tasks run `xcrun actool|ibtool` with a minimal environment
+      # (PATH=<Xcode>/usr/bin only), where xcrun's first lookup of those tools
+      # fails on fresh runners ("unable to find utility"). Running the same
+      # lookup once beforehand, in that same environment, makes the build's
+      # calls succeed.
+      - name: Warm up Xcode asset tools
         run: |
-          PROPS="$(dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64 -p:IosOnly=true \
-            -t:_DetectSdkLocations -getProperty:_SdkDevPath -getProperty:_SdkBinPath -getProperty:_SdkUsrPath 2>&1 | tail -8 | tr '\n' ' ')"
-          echo "::notice title=SDK paths::$PROPS"
           DEV="$(xcode-select -p)"
-          for USR in "$DEV/usr" "$DEV/Platforms/iPhoneSimulator.platform/Developer/usr"; do
-            OUT="$(env -i HOME="$HOME" PATH="$USR/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$USR" xcrun_verbose=1 \
-              /usr/bin/xcrun actool --version 2>&1 | tail -6 | tr '\n' ' ')"
-            echo "::notice title=xcrun actool with usr=$USR::$OUT"
+          xcrun simctl list runtimes > /dev/null
+          for TOOL in actool ibtool; do
+            xcrun "$TOOL" --version > /dev/null
+            OUT="$(env -i HOME="$HOME" PATH="$DEV/usr/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$DEV/usr" \
+              /usr/bin/xcrun "$TOOL" --version 2>&1 | tail -3 | tr '\n' ' ')"
+            echo "::notice title=$TOOL warm-up::$OUT"
           done
-          OUT="$(env -i HOME="$HOME" PATH="$DEV/usr/bin" DEVELOPER_DIR="$DEV" XCODE_DEVELOPER_USR_PATH="$DEV/usr" \
-            "$DEV/usr/bin/xcodebuild" -sdk "$DEV/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" -find actool 2>&1 | tail -6 | tr '\n' ' ')"
-          echo "::notice title=xcodebuild -find in task env::$OUT"
 
       # ------------------------------------------------- simulator + smoke --
       - name: Build for simulator
