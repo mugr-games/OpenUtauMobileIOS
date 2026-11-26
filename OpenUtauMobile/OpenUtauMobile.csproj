@@ -17,6 +17,9 @@
 		<RootNamespace>OpenUtauMobile</RootNamespace>
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
+		<!-- MAUI 9 workloads are past end of support; newer SDKs fail the build on that
+		     (NETSDK1202) unless this check is disabled. -->
+		<CheckEolWorkloads>false</CheckEolWorkloads>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<!--<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>-->
