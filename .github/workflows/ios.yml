@@ -53,9 +53,9 @@ jobs:
 
       # ------------------------------------------------- simulator + smoke --
       - name: Build for simulator
-        run: >
-          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64
-          -p:EnableCodeSigning=false
+        run: |
+          set -o pipefail
+          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64             -p:EnableCodeSigning=false 2>&1 | tee build-sim.log
 
       - name: Simulator smoke test
         run: |
@@ -87,6 +87,10 @@ jobs:
           grep -q '\[ios-port\] worldline-pinvoke: OK' smoke/stdout.txt
           grep -q '\[ios-port\] onnxruntime: OK' smoke/stdout.txt
 
+      - name: Report build errors
+        if: failure()
+        run: python3 .github/scripts/report_errors.py build-sim.log build-device.log
+
       - name: Upload smoke test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -96,9 +100,9 @@ jobs:
 
       # ------------------------------------------------------ device build --
       - name: Build for device (unsigned)
-        run: >
-          dotnet build "$PROJECT" -f $TFM -c Release -r ios-arm64
-          -p:EnableCodeSigning=false
+        run: |
+          set -o pipefail
+          dotnet build "$PROJECT" -f $TFM -c Release -r ios-arm64             -p:EnableCodeSigning=false 2>&1 | tee build-device.log
 
       - name: Package unsigned IPA
         run: |
