@@ -102,10 +102,12 @@ jobs:
           echo "::notice title=xcrun warm-up::not found:${MISSING:- none}"
 
       # ------------------------------------------------- simulator + smoke --
+      # Simulator builds keep the default ad-hoc signature: on Apple Silicon an
+      # unsigned dylib is killed at load ("Code Signature Invalid").
       - name: Build for simulator
         run: |
           set -o pipefail
-          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64             -p:EnableCodeSigning=false -p:IosOnly=true 2>&1 | tee build-sim.log
+          dotnet build "$PROJECT" -f $TFM -c Release -r iossimulator-arm64 -p:IosOnly=true 2>&1 | tee build-sim.log
 
       - name: Simulator smoke test
         run: |
