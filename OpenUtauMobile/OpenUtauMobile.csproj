@@ -84,6 +84,9 @@
 		<ValidateXcodeVersion>false</ValidateXcodeVersion>
 		<!-- System (non-Xcode) tools: call them directly instead of via `xcrun`, whose
 		     lookup only searches Xcode dirs under the build's stripped PATH. -->
+		<!-- Keep real exception messages (Release defaults to bare resource keys such as
+		     "TypeInitialization_Type"), so error popups and logs stay readable. -->
+		<UseSystemResourceKeys>false</UseSystemResourceKeys>
 		<MdimportPath Condition="'$(MdimportPath)' == ''">/usr/bin/mdimport</MdimportPath>
 		<PlutilPath Condition="'$(PlutilPath)' == ''">/usr/bin/plutil</PlutilPath>
 	</PropertyGroup>

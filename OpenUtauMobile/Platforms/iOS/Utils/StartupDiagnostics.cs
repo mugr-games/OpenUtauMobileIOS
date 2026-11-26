@@ -24,7 +24,19 @@ namespace OpenUtauMobile.Platforms.iOS.Utils
                 double[]? f0 = OpenUtau.Core.Render.Worldline.F0(new float[44100], 44100, 10.0, 0);
                 return f0 != null ? $"OK F0 -> {f0.Length} frames" : "FAIL F0 returned null";
             });
+            Report("onnxruntime-native", CheckOnnxNative);
             Report("onnxruntime", () => "OK " + Microsoft.ML.OnnxRuntime.OrtEnv.Instance().GetVersionString());
+        }
+
+        /// <summary>Where (if anywhere) the ORT C API ended up: statically in the executable or as a framework.</summary>
+        private static string CheckOnnxNative()
+        {
+            bool inMain = NativeLibrary.TryGetExport(NativeLibrary.GetMainProgramHandle(), "OrtGetApiBase", out _);
+            string fwDir = NSBundle.MainBundle.PrivateFrameworksPath ?? "";
+            string frameworks = Directory.Exists(fwDir)
+                ? string.Join(",", Directory.GetDirectories(fwDir).Select(Path.GetFileName))
+                : "(none)";
+            return $"OrtGetApiBase in executable={inMain}; Frameworks=[{frameworks}]";
         }
 
         private static string CheckWorldline()
@@ -47,7 +59,13 @@ namespace OpenUtauMobile.Platforms.iOS.Utils
             }
             catch (Exception e)
             {
-                result = "FAIL " + e.GetType().Name + ": " + e.Message;
+                // Include the inner chain: TypeInitializationException hides the real cause.
+                var parts = new List<string>();
+                for (Exception? x = e; x != null; x = x.InnerException)
+                {
+                    parts.Add(x.GetType().Name + ": " + x.Message);
+                }
+                result = "FAIL " + string.Join(" -> ", parts);
             }
             Console.WriteLine($"[ios-port] {name}: {result}");
         }
