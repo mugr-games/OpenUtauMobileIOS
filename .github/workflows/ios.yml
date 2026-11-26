@@ -32,6 +32,15 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      # The runner image also has newer SDKs (.NET 11), which would otherwise win
+      # and install workloads that can't build net9.0-ios.
+      - name: Pin .NET 9 SDK
+        run: |
+          V="$(dotnet --list-sdks | awk '/^9\./{print $1}' | sort -V | tail -1)"
+          echo "{\"sdk\":{\"version\":\"$V\",\"rollForward\":\"disable\"}}" > global.json
+          cat global.json
+          dotnet --version
+
       - name: Install iOS workload
         run: |
           dotnet workload install maui-ios
