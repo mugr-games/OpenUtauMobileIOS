@@ -82,6 +82,10 @@
 		<MtouchLink>SdkOnly</MtouchLink>
 		<!-- CI pins an Xcode; don't hard-fail on a newer minor version. -->
 		<ValidateXcodeVersion>false</ValidateXcodeVersion>
+		<!-- System (non-Xcode) tools: call them directly instead of via `xcrun`, whose
+		     lookup only searches Xcode dirs under the build's stripped PATH. -->
+		<MdimportPath Condition="'$(MdimportPath)' == ''">/usr/bin/mdimport</MdimportPath>
+		<PlutilPath Condition="'$(PlutilPath)' == ''">/usr/bin/plutil</PlutilPath>
 	</PropertyGroup>
 
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
