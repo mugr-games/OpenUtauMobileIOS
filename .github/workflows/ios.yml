@@ -82,7 +82,13 @@ jobs:
         run: |
           DEV="$(xcode-select -p)"
           xcrun simctl list runtimes > /dev/null
-          TOOLS="actool ibtool install_name_tool strip dsymutil lipo codesign codesign_allocate
+          # System tools the build also runs through xcrun (derq has no path override):
+          # link them into the default toolchain, which xcrun searches directly.
+          TC="$DEV/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+          for SYS in derq mdimport plutil codesign; do
+            [ -e "$TC/$SYS" ] || sudo ln -s "/usr/bin/$SYS" "$TC/$SYS"
+          done
+          TOOLS="derq mdimport actool ibtool install_name_tool strip dsymutil lipo codesign codesign_allocate
                  clang clang++ ld ar ranlib libtool nm otool bitcode_strip plutil
                  swift-stdlib-tool swiftc momc mapc metal metallib coremlc intentbuilderc
                  xcodebuild simctl devicectl dwarfdump size segedit vtool"
