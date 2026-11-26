@@ -28,5 +28,19 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>CFBundleDisplayName</key>
+	<string>OpenUtau</string>
+	<!-- Show the app's Documents folder in the Files app ("On My iPhone > OpenUtau"),
+	     so projects, exported WAVs and singer archives can be moved in and out. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<!-- Full-screen editor: opt out of iPad Split View / Slide Over. -->
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<!-- Uses only exempt (OS-provided) encryption. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

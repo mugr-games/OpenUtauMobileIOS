@@ -67,6 +67,30 @@
 		<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
 	</PropertyGroup>
 
+	<!-- iOS -->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<!-- Everything is AOT-compiled (iOS forbids JIT); the interpreter is only a
+		     fallback for code full AOT cannot pre-compile (generic virtuals and
+		     reflection paths in Newtonsoft.Json / YamlDotNet / ReactiveUI). -->
+		<MtouchInterpreter>-all</MtouchInterpreter>
+		<!-- Trim only the SDK: phonemizers and serializers are found by reflection. -->
+		<MtouchLink>SdkOnly</MtouchLink>
+		<!-- CI pins an Xcode; don't hard-fail on a newer minor version. -->
+		<ValidateXcodeVersion>false</ValidateXcodeVersion>
+	</PropertyGroup>
+
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<!-- libworldline (resampler + WORLD vocoder), built by native/ios/build_worldline_ios.sh.
+		     Resolved at runtime by Platforms/iOS/Utils/NativeLibraryResolver.cs. -->
+		<NativeReference Include="Platforms\iOS\Native\worldline.xcframework">
+			<Kind>Framework</Kind>
+			<SmartLink>False</SmartLink>
+		</NativeReference>
+		<!-- OpenUtau.Core uses the 1.22.1 managed bindings, which need native API v22;
+		     the 1.16.3 native package it pins would fail to initialise on iOS. -->
+		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.1" />
+	</ItemGroup>
+
 	<!-- 原生库 -->
 	<!--<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
 		<NativeLibrary Include="Platforms/Android/Lib/arm64-v8a/libworldline.so">

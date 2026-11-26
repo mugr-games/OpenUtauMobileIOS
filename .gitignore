@@ -369,3 +369,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 .idea/
+# iOS native build outputs (native/ios/build_worldline_ios.sh)
+native/ios/build/
+OpenUtauMobile/Platforms/iOS/Native/

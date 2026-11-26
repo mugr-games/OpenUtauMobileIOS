@@ -32,7 +32,7 @@ namespace OpenUtauMobile.Utils
             AppLifeCycleHelper = new OpenUtauMobile.Platforms.Android.Utils.AndroidAppLifeCycleHelper();
 #elif IOS
             ExternalStorageService = new OpenUtauMobile.Platforms.iOS.Utils.Permission.ExternalStorageService();
-            AudioOutput = new OpenUtau.Audio.DummyAudioOutput(); // iOS平台使用DummyAudioOutput作为占位符
+            AudioOutput = new OpenUtauMobile.Platforms.iOS.Utils.Audio.AVAudioEngineOutput();
             AppLifeCycleHelper = new OpenUtauMobile.Platforms.iOS.Utils.iOSAppLifeCycleHelper();
 #elif WINDOWS
             ExternalStorageService = new OpenUtauMobile.Platforms.Windows.Utils.Permission.ExternalStorageService();
@@ -59,6 +59,10 @@ namespace OpenUtauMobile.Utils
             {
                 throw new InvalidOperationException("ExternalStorageService is not initialized. Call ObjectProvider.Initialize() first.");
             }
+#if IOS
+            // iOS: system document picker (Files / iCloud Drive), copied into the sandbox.
+            return await OpenUtauMobile.Platforms.iOS.Utils.IosFileImporter.PickAndImportAsync(types);
+#else
             if (await RequestStoragePermissionAsync())
             {
 #if !WINDOWS
@@ -91,6 +95,7 @@ namespace OpenUtauMobile.Utils
                 await Toast.Make(AppResources.StoragePermissionDeniedToast, CommunityToolkit.Maui.Core.ToastDuration.Short, 16).Show();
                 return string.Empty;
             }
+#endif
         }
 
         public static async Task<string> SaveFile(string[] types, ContentPage context, string initialDirectory = "", string initialFileName = "")
